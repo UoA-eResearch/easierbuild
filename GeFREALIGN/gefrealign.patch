@@ -1,0 +1,1135 @@
+diff -rupN GeFREALIGNv8/src_rec/CreateThread.cu GeFREALIGNv8_new/src_rec/CreateThread.cu
+--- GeFREALIGNv8/src_rec/CreateThread.cu	2010-02-11 14:35:11.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/CreateThread.cu	2014-06-11 16:07:18.651949000 +1200
+@@ -32,7 +32,7 @@ void *CreateThread(void *ARG)
+         cudaDeviceProp prop;
+         if(cudaGetDeviceProperties(&prop, i) == cudaSuccess) 
+         {
+-            if(prop.major >= 1 && prop.minor>=3) 
++            if(prop.major >= 2 || (prop.major >= 1 && prop.minor >= 3)) 
+             {
+               break;
+             }
+@@ -57,11 +57,13 @@ void *CreateThread(void *ARG)
+    	exit(0);
+    }
+    
++/*
+    if(cudaSetDeviceFlags(cudaDeviceMapHost)!=cudaSuccess)
+    {
+    	cout<<"error: Set CUDA Device #"<<arg->m_DeviceNum<<" Flag failed!"<<endl;
+    	exit(0);
+    }
++*/
+     
+    //Prepare GPU memory
+    //for GPU #0
+diff -rupN GeFREALIGNv8/src_rec/ctfapply_kernel.cu GeFREALIGNv8_new/src_rec/ctfapply_kernel.cu
+--- GeFREALIGNv8/src_rec/ctfapply_kernel.cu	2010-02-12 08:27:50.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/ctfapply_kernel.cu	2014-06-11 15:46:25.359338235 +1200
+@@ -2,18 +2,18 @@
+ 
+ // CUDA kernels used by ctfapply.cu
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -21,7 +21,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -29,7 +29,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -38,7 +38,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ }
+ 
+ 
+-__device__ CPLX ctf(float cs, float wl, float wgh1, float wgh2,
++__device__ inline CPLX ctf(float cs, float wl, float wgh1, float wgh2,
+ 					float dfmid1, float dfmid2, float angast, float thetatr,
+ 					int ix, int iy, float tx, float ty)
+ {
+diff -rupN GeFREALIGNv8/src_rec/frealign_v8.cu GeFREALIGNv8_new/src_rec/frealign_v8.cu
+--- GeFREALIGNv8/src_rec/frealign_v8.cu	2010-02-12 08:30:22.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/frealign_v8.cu	2014-06-11 15:48:20.938575440 +1200
+@@ -460,7 +460,7 @@ int main()
+ 		cudaDeviceProp prop;
+ 		if(cudaGetDeviceProperties(&prop, i) == cudaSuccess) 
+ 		{
+-			if(prop.major >= 1 && prop.minor>=3) 
++			if(prop.major >= 2 || (prop.major >= 1 && prop.minor >= 3)) 
+ 			{
+ 				if(prop.kernelExecTimeoutEnabled==0) GPUList.push_back(i);
+ 				else GPUListMonitor.push_back(i);
+diff -rupN GeFREALIGNv8/src_rec/Makefile GeFREALIGNv8_new/src_rec/Makefile
+--- GeFREALIGNv8/src_rec/Makefile	2010-03-22 17:53:51.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/Makefile	2014-06-11 15:46:25.315720929 +1200
+@@ -23,7 +23,7 @@ CUFLAGS = -O3  -lg2c -lcufft -DPROTOTYPE
+ 
+ COMP   = g77
+ 
+-CUDA   = nvcc -arch sm_13 -lpthread
++CUDA   = nvcc -arch sm_20 -lpthread
+ 
+ CC     = gcc
+ 
+@@ -52,12 +52,12 @@ $(LIB) : ioc.o $(ELEMENTS)
+ .cu.a:
+ 	$(CUDA) $(CUFLAGS) -c $< 
+ 	$(AR) r $(LIB) $*.o
+-	@\rm $*.o
++	
+ 	
+ .f.a:
+ 	$(COMP) $(FFLAGS) $<
+ 	$(AR) r $(LIB) $*.o
+-	@\rm $*.o
++	
+ 	
+ clean:
+ 	rm -rf frealign_v8.a
+diff -rupN GeFREALIGNv8/src_rec/pinsert_s_gpu.cu GeFREALIGNv8_new/src_rec/pinsert_s_gpu.cu
+--- GeFREALIGNv8/src_rec/pinsert_s_gpu.cu	2010-02-12 07:56:24.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/pinsert_s_gpu.cu	2014-06-11 15:46:25.384475623 +1200
+@@ -14,18 +14,18 @@ __device__ inline void atomicFloatAdd(fl
+       }
+ }
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -33,7 +33,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cDc(CPLX a, CPLX b) // a/b
++__device__ inline CPLX cDc(CPLX a, CPLX b) // a/b
+ {
+ 	CPLX c;
+ 	float ss=b.x*b.x+b.y*b.y;
+@@ -42,7 +42,7 @@ __device__ CPLX cDc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -50,7 +50,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -58,7 +58,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ CPLX cMc(CPLX a, CPLX b)  //a-b
++__device__ inline CPLX cMc(CPLX a, CPLX b)  //a-b
+ {
+ 	CPLX c;
+ 	c.x=a.x-b.x;
+@@ -66,7 +66,7 @@ __device__ CPLX cMc(CPLX a, CPLX b)  //a
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg, float *sinclut)
++__device__ inline float boxft_lut(float *arg, float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -90,7 +90,7 @@ __device__ float boxft_lut(float *arg, f
+ }
+ 
+ 
+-__device__ float pdiff(CPLX c1, CPLX c2)
++__device__ inline float pdiff(CPLX c1, CPLX c2)
+ {
+ 	CPLX c;
+ 	
+@@ -100,7 +100,7 @@ __device__ float pdiff(CPLX c1, CPLX c2)
+ 
+ }
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -154,7 +154,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -244,7 +244,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ void ewaldin(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline void ewaldin(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j, float *dm, float &thet, float *xyz, CPLX &fo_r, CPLX &fo_l, 
+              CPLX &fobs, float &prel, int &iewald, CPLX &ctfr, CPLX &ctfl)
+diff -rupN GeFREALIGNv8/src_rec/presb_gpu.cu GeFREALIGNv8_new/src_rec/presb_gpu.cu
+--- GeFREALIGNv8/src_rec/presb_gpu.cu	2010-02-12 07:50:32.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/presb_gpu.cu	2014-06-11 15:46:25.387104868 +1200
+@@ -16,18 +16,18 @@ extern pthread_key_t cuMemKey;
+       }
+ }*/
+ //******************
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__  CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline  CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -35,7 +35,7 @@ __device__  CPLX cXc(CPLX a, CPLX b) // 
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -43,7 +43,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -51,7 +51,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -75,7 +75,7 @@ __device__ float boxft_lut(float *arg,fl
+ }
+ 
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -148,7 +148,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 		}
+ 	}*/       
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -238,7 +238,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j,float *dm, float &thet, CPLX &ctfr, CPLX &ctfl)
+ {
+diff -rupN GeFREALIGNv8/src_rec/rlft3.cu GeFREALIGNv8_new/src_rec/rlft3.cu
+--- GeFREALIGNv8/src_rec/rlft3.cu	2010-02-11 14:35:11.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/rlft3.cu	2014-06-11 15:46:25.389531340 +1200
+@@ -1,17 +1,18 @@
++#include "lmain.h"
+ #include "rlft3.h"
+ #include "cuda_runtime.h"
+ #include "cuMem.h"
+ extern vector<planFFT> planlist;
+ extern pthread_key_t cuMemKey;
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0;
+ 	return f;
+ }
+ 
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -19,7 +20,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -27,7 +28,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ CPLX cMc(CPLX a, CPLX b)  //a-b
++__device__ inline CPLX cMc(CPLX a, CPLX b)  //a-b
+ {
+ 	CPLX c;
+ 	c.x=a.x-b.x;
+@@ -35,7 +36,7 @@ __device__ CPLX cMc(CPLX a, CPLX b)  //a
+ 	return c;
+ }
+ 
+-__device__ void swap(CPLX *a, CPLX *b)
++__device__ inline void swap(CPLX *a, CPLX *b)
+ {
+ 	CPLX w;
+ 	w=*a;
+diff -rupN GeFREALIGNv8/src_rec/variance_gpu.cu GeFREALIGNv8_new/src_rec/variance_gpu.cu
+--- GeFREALIGNv8/src_rec/variance_gpu.cu	2010-02-12 07:56:32.000000000 +1300
++++ GeFREALIGNv8_new/src_rec/variance_gpu.cu	2014-06-11 15:46:25.392495044 +1200
+@@ -1,12 +1,12 @@
+ #include "variance_gpu.h"
+ 
+ extern pthread_key_t cuMemKey;
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+diff -rupN GeFREALIGNv8/src_ref/cc3_gpu.cu GeFREALIGNv8_new/src_ref/cc3_gpu.cu
+--- GeFREALIGNv8/src_ref/cc3_gpu.cu	2010-02-11 12:21:55.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/cc3_gpu.cu	2014-06-11 15:46:25.495874349 +1200
+@@ -26,18 +26,18 @@ extern pthread_key_t cuMemKey;
+       }
+ }*/
+ //******************
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__  CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline  CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -45,7 +45,7 @@ __device__  CPLX cXc(CPLX a, CPLX b) // 
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -53,7 +53,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -61,7 +61,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -86,7 +86,7 @@ __device__ float boxft_lut(float *arg,fl
+ }
+ 
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -161,7 +161,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 		}
+ 	}*/       
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -237,7 +237,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j,float *dm, float &thet, CPLX &ctfr, CPLX &ctfl)
+ {
+diff -rupN GeFREALIGNv8/src_ref/cc3m_gpu.cu GeFREALIGNv8_new/src_ref/cc3m_gpu.cu
+--- GeFREALIGNv8/src_ref/cc3m_gpu.cu	2010-02-11 12:22:15.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/cc3m_gpu.cu	2014-06-11 15:46:25.498902640 +1200
+@@ -26,18 +26,18 @@ extern pthread_key_t cuMemKey;
+       }
+ }*/
+ //******************
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__  CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline  CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -45,7 +45,7 @@ __device__  CPLX cXc(CPLX a, CPLX b) // 
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -53,7 +53,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -61,7 +61,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -86,7 +86,7 @@ __device__ float boxft_lut(float *arg,fl
+ }
+ 
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -161,7 +161,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 		}
+ 	}*/       
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -237,7 +237,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j,float *dm, float &thet, CPLX &ctfr, CPLX &ctfl)
+ {
+diff -rupN GeFREALIGNv8/src_ref/ccoef_gpu.cu GeFREALIGNv8_new/src_ref/ccoef_gpu.cu
+--- GeFREALIGNv8/src_ref/ccoef_gpu.cu	2010-02-11 14:17:44.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/ccoef_gpu.cu	2014-06-11 15:46:25.500911875 +1200
+@@ -2,7 +2,7 @@
+ #include "pextract_gpu.h"
+ extern pthread_key_t cuMemKey;
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+diff -rupN GeFREALIGNv8/src_ref/ccp_gpu.cu GeFREALIGNv8_new/src_ref/ccp_gpu.cu
+--- GeFREALIGNv8/src_ref/ccp_gpu.cu	2010-02-11 14:24:46.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/ccp_gpu.cu	2014-06-11 15:46:25.506448732 +1200
+@@ -13,18 +13,18 @@ extern "C" void maskcos2_(int *nsam, flo
+ 	texture<float, 1, cudaReadModeElementType> texRef_sinclut;
+ 
+ //******************
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -32,7 +32,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -40,7 +40,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -48,7 +48,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -73,7 +73,7 @@ __device__ float boxft_lut(float *arg,fl
+ }
+ 
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -148,7 +148,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 		}
+ 	}*/       
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+diff -rupN GeFREALIGNv8/src_ref/CreateThread.cu GeFREALIGNv8_new/src_ref/CreateThread.cu
+--- GeFREALIGNv8/src_ref/CreateThread.cu	2010-02-11 12:10:01.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/CreateThread.cu	2014-06-11 16:07:32.704366000 +1200
+@@ -32,7 +32,7 @@ void *CreateThread(void *ARG)
+         cudaDeviceProp prop;
+         if(cudaGetDeviceProperties(&prop, i) == cudaSuccess) 
+         {
+-            if(prop.major >= 1 && prop.minor>=3) 
++            if(prop.major >= 2 || (prop.major >= 1 && prop.minor >= 3))
+             {
+               break;
+             }
+@@ -57,11 +57,13 @@ void *CreateThread(void *ARG)
+    	exit(0);
+    }
+    
++/*
+    if(cudaSetDeviceFlags(cudaDeviceMapHost)!=cudaSuccess)
+    {
+    	cout<<"error: Set CUDA Device #"<<arg->m_DeviceNum<<" Flag failed!"<<endl;
+    	exit(0);
+    }
++*/
+     
+    //Prepare GPU memory
+    //for GPU #0
+diff -rupN GeFREALIGNv8/src_ref/ctfapply_gpu.cu GeFREALIGNv8_new/src_ref/ctfapply_gpu.cu
+--- GeFREALIGNv8/src_ref/ctfapply_gpu.cu	2010-02-11 13:51:54.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/ctfapply_gpu.cu	2014-06-11 15:46:25.511041008 +1200
+@@ -6,13 +6,13 @@
+ 
+ extern pthread_key_t cuMemKey;
+ /*
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -20,7 +20,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -28,7 +28,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -37,7 +37,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ }
+ 
+ 
+-__device__ CPLX ctf(float cs, float wl, float wgh1, float wgh2,
++__device__ inline CPLX ctf(float cs, float wl, float wgh1, float wgh2,
+ 					float dfmid1, float dfmid2, float angast, float thetatr,
+ 					int ix, int iy, float tx, float ty)
+ {
+diff -rupN GeFREALIGNv8/src_ref/ctfapply_kernel.cu GeFREALIGNv8_new/src_ref/ctfapply_kernel.cu
+--- GeFREALIGNv8/src_ref/ctfapply_kernel.cu	2010-02-11 12:10:01.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/ctfapply_kernel.cu	2014-06-11 15:46:25.512296641 +1200
+@@ -1,18 +1,18 @@
+ #include "ctfapply_kernel.h"
+ 
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -20,7 +20,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -28,7 +28,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -37,7 +37,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ }
+ 
+ 
+-__device__ CPLX ctf(float cs, float wl, float wgh1, float wgh2,
++__device__ inline CPLX ctf(float cs, float wl, float wgh1, float wgh2,
+ 					float dfmid1, float dfmid2, float angast, float thetatr,
+ 					int ix, int iy, float tx, float ty)
+ {
+diff -rupN GeFREALIGNv8/src_ref/frealign_v8.cu GeFREALIGNv8_new/src_ref/frealign_v8.cu
+--- GeFREALIGNv8/src_ref/frealign_v8.cu	2010-02-11 12:10:01.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/frealign_v8.cu	2014-06-11 15:48:45.642211404 +1200
+@@ -460,7 +460,7 @@ int main()
+ 		cudaDeviceProp prop;
+ 		if(cudaGetDeviceProperties(&prop, i) == cudaSuccess) 
+ 		{
+-			if(prop.major >= 1 && prop.minor>=3) 
++			if(prop.major >= 2 || (prop.major >= 1 && prop.minor >= 3))
+ 			{
+ 				if(prop.kernelExecTimeoutEnabled==0) GPUList.push_back(i);
+ 				else GPUListMonitor.push_back(i);
+diff -rupN GeFREALIGNv8/src_ref/Makefile GeFREALIGNv8_new/src_ref/Makefile
+--- GeFREALIGNv8/src_ref/Makefile	2010-03-22 17:52:51.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/Makefile	2014-06-11 15:46:25.412390268 +1200
+@@ -23,7 +23,7 @@ CUFLAGS = -O3 -lg2c -lcufft -DPROTOTYPE 
+ 
+ COMP   = g77
+ 
+-CUDA   = nvcc -arch sm_13 -lpthread
++CUDA   = nvcc -arch sm_20 -lpthread
+ 
+ CC     = gcc
+ 
+@@ -52,12 +52,12 @@ $(LIB) : ioc.o $(ELEMENTS)
+ .cu.a:
+ 	$(CUDA) $(CUFLAGS) -c $< 
+ 	$(AR) r $(LIB) $*.o
+-	@\rm $*.o
++	
+ 	
+ .f.a:
+ 	$(COMP) $(FFLAGS) $<
+ 	$(AR) r $(LIB) $*.o
+-	@\rm $*.o
++	
+ 	
+ clean:
+ 	rm -rf frealign_v8.a
+diff -rupN GeFREALIGNv8/src_ref/pextract_gpu.cu GeFREALIGNv8_new/src_ref/pextract_gpu.cu
+--- GeFREALIGNv8/src_ref/pextract_gpu.cu	2010-02-11 13:55:06.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/pextract_gpu.cu	2014-06-11 15:46:25.542330248 +1200
+@@ -8,13 +8,13 @@ extern pthread_key_t cuMemKey;
+ 	texture<CPLX, 2, cudaReadModeElementType> texRef_ctff;
+ 	texture<CPLX, 1, cudaReadModeElementType> texRef_ctfs;
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -22,7 +22,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -30,7 +30,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -38,7 +38,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -62,7 +62,7 @@ __device__ float boxft_lut(float *arg,fl
+ 
+ }
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -100,7 +100,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 	return samp;
+ }
+ 
+-/*__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++/*__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float xx, float yy, float zz,float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -191,7 +191,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 	return samp;
+ } */          
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -268,7 +268,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ } 
+ 
+ 
+-__device__ CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j,float *dm, float &thet, CPLX &ctfr, CPLX &ctfl)
+ {
+diff -rupN GeFREALIGNv8/src_ref/pinsert_s_gpu.cu GeFREALIGNv8_new/src_ref/pinsert_s_gpu.cu
+--- GeFREALIGNv8/src_ref/pinsert_s_gpu.cu	2010-02-11 14:14:15.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/pinsert_s_gpu.cu	2014-06-11 15:46:25.547567595 +1200
+@@ -15,18 +15,18 @@ __device__ inline void atomicFloatAdd(fl
+       }
+ }
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -34,7 +34,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cDc(CPLX a, CPLX b) // a/b
++__device__ inline CPLX cDc(CPLX a, CPLX b) // a/b
+ {
+ 	CPLX c;
+ 	float ss=b.x*b.x+b.y*b.y;
+@@ -43,7 +43,7 @@ __device__ CPLX cDc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -51,7 +51,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -59,7 +59,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ CPLX cMc(CPLX a, CPLX b)  //a-b
++__device__ inline CPLX cMc(CPLX a, CPLX b)  //a-b
+ {
+ 	CPLX c;
+ 	c.x=a.x-b.x;
+@@ -67,7 +67,7 @@ __device__ CPLX cMc(CPLX a, CPLX b)  //a
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg, float *sinclut)
++__device__ inline float boxft_lut(float *arg, float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -91,7 +91,7 @@ __device__ float boxft_lut(float *arg, f
+ }
+ 
+ 
+-__device__ float pdiff(CPLX c1, CPLX c2)
++__device__ inline float pdiff(CPLX c1, CPLX c2)
+ {
+ 	CPLX c;
+ 	
+@@ -101,7 +101,7 @@ __device__ float pdiff(CPLX c1, CPLX c2)
+ 
+ }
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -155,7 +155,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -245,7 +245,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ void ewaldin(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline void ewaldin(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j, float *dm, float &thet, float *xyz, CPLX &fo_r, CPLX &fo_l, 
+              CPLX &fobs, float &prel, int &iewald, CPLX &ctfr, CPLX &ctfl)
+diff -rupN GeFREALIGNv8/src_ref/presb_gpu.cu GeFREALIGNv8_new/src_ref/presb_gpu.cu
+--- GeFREALIGNv8/src_ref/presb_gpu.cu	2010-02-11 12:23:38.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/presb_gpu.cu	2014-06-11 15:46:25.551052773 +1200
+@@ -18,18 +18,18 @@ extern pthread_key_t cuMemKey;
+       }
+ }*/
+ //******************
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+ }
+ 
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__  CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline  CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -37,7 +37,7 @@ __device__  CPLX cXc(CPLX a, CPLX b) // 
+ 	return c;
+ }
+ 
+-__device__ CPLX cXr(CPLX a, float b)
++__device__ inline CPLX cXr(CPLX a, float b)
+ {
+ 	CPLX c;
+ 	c.x=a.x*b;
+@@ -45,7 +45,7 @@ __device__ CPLX cXr(CPLX a, float b)
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -53,7 +53,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ float boxft_lut(float *arg,float *sinclut)
++__device__ inline float boxft_lut(float *arg,float *sinclut)
+ {
+ 	int i,j;
+ 	float sinc,prod=1.0f;
+@@ -78,7 +78,7 @@ __device__ float boxft_lut(float *arg,fl
+ }
+ 
+ 
+-__device__ CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3dbig(int nsama, int ipad, CPLX *a3df, CPLX *a3ds, 
+                                       float &x, float &y, float &z)
+ {
+ 	int nsam,jc;
+@@ -153,7 +153,7 @@ __device__ CPLX ainterpo3dbig(int nsama,
+ 		}
+ 	}*/       
+ 
+-__device__ CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ainterpo3ds(int nsam, int irad, CPLX *a3df, CPLX *a3ds, 
+                         float &xx, float &yy, float &zz, float *sinclut, int &ipad)
+ {
+ 	int ls,lt,ns,nt,ms,mt,jc;
+@@ -229,7 +229,7 @@ __device__ CPLX ainterpo3ds(int nsam, in
+ 	return samp;
+ }           
+ 
+-__device__ CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
++__device__ inline CPLX ewaldex(int &nsam, int &irad, CPLX *a3df, CPLX *a3ds, 
+              float *sinclut, int &ipad,
+              int &i, int &j,float *dm, float &thet, CPLX &ctfr, CPLX &ctfl)
+ {
+diff -rupN GeFREALIGNv8/src_ref/rlft3.cu GeFREALIGNv8_new/src_ref/rlft3.cu
+--- GeFREALIGNv8/src_ref/rlft3.cu	2010-02-11 12:10:01.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/rlft3.cu	2014-06-11 15:46:25.554249407 +1200
+@@ -1,17 +1,18 @@
++#include "lmain.h"
+ #include "rlft3.h"
+ #include "cuda_runtime.h"
+ #include "cuMem.h"
+ extern vector<planFFT> planlist;
+ extern pthread_key_t cuMemKey;
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0;
+ 	return f;
+ }
+ 
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+@@ -19,7 +20,7 @@ __device__ CPLX cXc(CPLX a, CPLX b) // a
+ 	return c;
+ }
+ 
+-__device__ CPLX cPc(CPLX a, CPLX b) //a+b
++__device__ inline CPLX cPc(CPLX a, CPLX b) //a+b
+ {
+ 	CPLX c;
+ 	c.x=a.x+b.x;
+@@ -27,7 +28,7 @@ __device__ CPLX cPc(CPLX a, CPLX b) //a+
+ 	return c;
+ }
+ 
+-__device__ CPLX cMc(CPLX a, CPLX b)  //a-b
++__device__ inline CPLX cMc(CPLX a, CPLX b)  //a-b
+ {
+ 	CPLX c;
+ 	c.x=a.x-b.x;
+@@ -35,7 +36,7 @@ __device__ CPLX cMc(CPLX a, CPLX b)  //a
+ 	return c;
+ }
+ 
+-__device__ void swap(CPLX *a, CPLX *b)
++__device__ inline void swap(CPLX *a, CPLX *b)
+ {
+ 	CPLX w;
+ 	w=*a;
+diff -rupN GeFREALIGNv8/src_ref/rotate2d_gpu.cu GeFREALIGNv8_new/src_ref/rotate2d_gpu.cu
+--- GeFREALIGNv8/src_ref/rotate2d_gpu.cu	2010-02-11 14:24:30.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/rotate2d_gpu.cu	2014-06-11 15:46:25.555266519 +1200
+@@ -2,7 +2,7 @@
+ 
+ #include "pad.h"
+ 
+-__device__ CPLX conjg(CPLX f)
++__device__ inline CPLX conjg(CPLX f)
+ {
+ 	f.y*=-1.0f;
+ 	return f;
+diff -rupN GeFREALIGNv8/src_ref/sigma2_gpu.cu GeFREALIGNv8_new/src_ref/sigma2_gpu.cu
+--- GeFREALIGNv8/src_ref/sigma2_gpu.cu	2010-02-11 14:11:30.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/sigma2_gpu.cu	2014-06-11 15:46:25.557824506 +1200
+@@ -2,7 +2,7 @@
+ #include "pextract_gpu.h"
+ extern pthread_key_t cuMemKey;
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+diff -rupN GeFREALIGNv8/src_ref/variance_gpu.cu GeFREALIGNv8_new/src_ref/variance_gpu.cu
+--- GeFREALIGNv8/src_ref/variance_gpu.cu	2010-02-11 14:19:14.000000000 +1300
++++ GeFREALIGNv8_new/src_ref/variance_gpu.cu	2014-06-11 15:46:25.562687217 +1200
+@@ -1,12 +1,12 @@
+ #include "variance_gpu.h"
+ 
+ extern pthread_key_t cuMemKey;
+-__device__ float cabs(CPLX f)
++__device__ inline float cabs(CPLX f)
+ {
+ 	return sqrt(f.x*f.x+f.y*f.y);
+ }
+ 
+-__device__ CPLX cXc(CPLX a, CPLX b) // a*b
++__device__ inline CPLX cXc(CPLX a, CPLX b) // a*b
+ {
+ 	CPLX c;
+ 	c.x=a.x*b.x-a.y*b.y;
+

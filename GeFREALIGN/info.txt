@@ -1,0 +1,35 @@
+GPU-enabled version of FREALIGN, based on FREALIGN 8.06
+
+Website and Download: http://cryoem.ucsf.edu/software/GeFREALIGN.html
+
+Instructions to build it for our GPU/cuda combination:
+
+[mfel395@build-gpu-p src]$ ls
+gefrealign.patch  GeFREALIGNv8.06.tar.gz
+ 
+[mfel395@build-gpu-p src]$ tar xzf GeFREALIGNv8.06.tar.gz
+[mfel395@build-gpu-p src]$ ls
+gefrealign.patch  GeFREALIGNv8  GeFREALIGNv8.06.tar.gz
+ 
+[mfel395@build-gpu-p src]$ patch -p0 < gefrealign.patch
+...
+ 
+# enable CUDA environment
+[mfel395@build-gpu-p src]$ module load CUDA/6.0
+...
+ 
+[mfel395@build-gpu-p src]$ cd GeFREALIGNv8/src_rec
+[mfel395@build-gpu-p src]$ make
+...
+ 
+[mfel395@build-gpu-p src]$ cd ../src_ref
+[mfel395@build-gpu-p src]$ make
+...
+
+The binaries will created in GeFREALIGN/bin. Copy the binaries to any place you need.
+
+ 
+This works with Cuda driver version 331.62
+The 'Compute Mode' of the devices may have to be set to 'Exclusive_Process' (nvidia-smi -q | grep 'Compute Mode')
+
+
