@@ -21,7 +21,6 @@ tar xzf lammps-stable.tar.gz
 cd lammps-30Oct14/lib/meam
 module load intel/ics-2013
 module load OpenMPI/1.6.5-iccifort-2013.4.183
-cd lib/meam
 make -f Makefile.ifort
 # change lib/meam/Makefile.lammps as follows:
 #  meam_SYSINC =
@@ -32,3 +31,18 @@ make -f Makefile.ifort
 cd ../../src
 # set values of FFT_* variables in MAKE/Makefile.mpi to values from MAKE/OPTIONS/Makefile.intel_cpu to enable use of MKL
 make yes-meam mpi
+
+
+
+# support dumping png image files for each time step
+
+In src/MAKE/Makefile.mpi: 
+
+1. Add flag -DLAMMPS_PNG to LMP_INC variable
+
+2. Adjust the JPG_* variables as follows
+JPG_INC = /usr/include
+JPG_PATH = /usr/lib64/libpng.so
+JPG_LIB = /usr/lib64/libpng.so
+
+3. Rerun "make yes-meam mpi" in src/
