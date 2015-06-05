@@ -1,0 +1,37 @@
+#%Module
+
+proc ModulesHelp { } {
+    puts stderr {   Delft3D is a world leading 3D modeling suite to investigate hydrodynamics, sediment transport and morphology and water quality for fluvial, estuarine and coastal environments. - Homepage: http://oss.deltares.nl/web/delft3d
+    }
+}
+
+module-whatis {Description: Delft3D is a world leading 3D modeling suite to investigate hydrodynamics, sediment transport and morphology and water quality for fluvial, estuarine and coastal environments. - Homepage: http://oss.deltares.nl/web/delft3d
+}
+
+set root   /projects/uoa00035/local/Delft3D/5128-intel-2015a 
+
+conflict Delf3D
+
+if { ![is-loaded NetCDF/4.3.3.1-intel-2015a] } {
+    module load NetCDF/4.3.3.1-intel-2015a
+}
+
+prepend-path	CPATH		$root/include
+prepend-path	LD_LIBRARY_PATH		$root/lib
+prepend-path	LIBRARY_PATH		$root/lib
+prepend-path	MANPATH		$root/share/man
+prepend-path	PKG_CONFIG_PATH		$root/lib/pkgconfig
+prepend-path	PATH		$root/bin
+prepend-path	PATH		$root/lnx/flow2d3d/bin
+prepend-path	PATH		$root/lnx/menu/bin
+prepend-path	PATH		$root/lnx/part/bin
+prepend-path	PATH		$root/lnx/plugins/bin
+prepend-path	PATH		$root/lnx/swan/bin
+prepend-path	PATH		$root/lnx/swan/scripts
+prepend-path	PATH		$root/lnx/util/bin
+prepend-path	PATH		$root/lnx/waq/bin
+prepend-path	PATH		$root/lnx/wave/bin
+
+
+setenv	DELFT3DROOT		"$root"
+
