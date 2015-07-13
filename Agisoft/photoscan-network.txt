@@ -1,0 +1,137 @@
+How to use Agisoft Photoscan network processing features. 
+
+======================================================================
+All login shells should be secure against desktop power failure/reboot
+if running for a long time.
+
+Use GNU Screen when you first login. This will allow you to re-attach
+to the terminals in case of failure.
+
+Cheat Sheet: http://aperiodic.net/screen/quick_reference 
+
+======================================================================
+
+======================================================================
+
+If you see any of your jobs as SUSPENDED in squeue, something is wrong
+and you should contact NeSI support. Photoscan will not work with 
+suspension.
+
+=====================================================================
+
+
+1. Setup server
+================
+
+1.	Open a new terminal (or terminal tab) and connect to the login node. 
+
+2.	Now connect to one of the build nodes e.g. ssh build-sb
+
+3.	Load the Agisoft module
+
+4.	Get the host IP address:
+
+	addr=$(ifconfig | head -n 2 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+	echo $addr
+
+5.	Start the server with the host IP address:
+
+	photoscan --server --control $addr --dispatch $addr --root /
+
+
+2. Setup network monitor
+========================
+
+1.	Open a new terminal (or terminal tab) and connect to the login node with X11 forwarding enabled.
+	On Linux, use: ssh -Y upi@login.uoa.nesi.org.nz
+
+2. 	Make sure X11 forwarding is enabled. Run 'echo $DISPLAY', it should not be empty.	
+ 
+3.	Now connect to one of the build nodes e.g. ssh -Y build-sb
+ 	Make sure X11 forwarding is enabled. Run 'echo $DISPLAY', it should not be empty.	
+	
+4.	Load the Agisoft module
+
+5. 	Start the network monitor
+
+	monitor.sh
+
+6. Enter the IP address of the server into the 'Host name' field and click 'Connect'
+
+
+3. Start Agisoft Photoscan
+==========================
+
+1.	Open a new terminal (or terminal tab) and connect to the login node with X11 forwarding enabled.
+	On Linux, use: ssh -Y upi@login.uoa.nesi.org.nz
+
+2. 	Make sure X11 forwarding is enabled. Run 'echo $DISPLAY', it should not be empty.	
+ 
+3.	Now connect to one of the build nodes e.g. ssh -Y build-sb
+ 	Make sure X11 forwarding is enabled. Run 'echo $DISPLAY', it should not be empty.	
+	
+4.	Load the Agisoft module
+
+5. 	Start Photoscan:
+
+	photoscan.sh
+
+6.	Open your psz project (or create a new one)
+	If this doesn't work, try saving as .psx on your desktop and upload to the cluster filesystem
+	If it does, save your project with a .psx extension 
+
+8.	Open your .psx project
+
+9.	Setup network processing by opening Tools > Preferences > Network
+	Enable network processing
+	Enter the server IP address into the 'Host name' field
+	Enter / into the Root field
+	Select all the 'Fine-Level Task Distribution' options
+	Click OK
+
+4. Start some jobs
+==================
+
+1.	Open a new terminal (or terminal tab) and connect to the login node.
+2.	Save a file with the following job description:
+
+#!/bin/bash
+#SBATCH -J agisoft
+#SBATCH -A uoa00035       
+#SBATCH --time=35:00:00   
+#SBATCH --mem-per-cpu=5G  
+#SBATCH --cpus-per-task=12
+
+module load Agisoft
+srun photoscan --node --dispatch 10.0.104.80 --root / --opencl_cpu_cores_inactive 0
+
+3.	Edit the --dispatch node to reflect the IP address used for the server in Step 1
+	Configure other aspects such as the amount of memory and size of the job array	
+
+4.	Submit the job
+
+5.	Each job is treated independently. You should see them in the Network Monitor as
+	they register with the server
+
+6. 	Once most of them have come online, you can start your workflow via the Photoscan GUI.
+	It is best to use Batch Processing via Photoscan so that the tasks can be automated and
+	importantly, saved after each step.
+	
+	When processing start, you will see a message in the progress window:
+	X/Y nodes active
+
+	X means the number of jobs that are running a task
+	Y means the number of tasks that need to be processed
+	Optimal is X = Y
+	To increase X, submit more jobs
+
+	Easy way to submit jobs is with a loop:
+
+		for i in {0..100}; do sbatch job.sl; done
+
+	It is not unsual to need about 100 or more jobs with 12 cores each
+	(as in the example above)
+
+7.	Once your workflow has finished, you can cancel the jobs to remove them from the processing
+	pool.
+
