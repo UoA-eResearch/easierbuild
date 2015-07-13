@@ -63,5 +63,3 @@ salloc -A uoa00035 --ntasks=8 -C avx --time=5:00:00
 Next unset I_MPI_PMI_LIBRARY as this may cause some conflicts in access the correct MPI environment.
 
 Now run the make check and hopefully it should work.
-
-**Note that unsetting I_MPI_PMI_LIBRARY should be unneccessary during normal execution of jobs**
