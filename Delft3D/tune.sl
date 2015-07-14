@@ -12,7 +12,7 @@
 #module use /projects/uoa00035/privatemodules
 ml Python/3.4.3-intel-2015a
 ml VTune/2015_update2
-ml Delft3D/5128-intel-mpi
+ml Delft3D/5128-intel-2015a
 ml impi/5.0.3.048-iccifort-2015.2.164-GCC-4.9.2
 
 ml itac/9.0.3.051

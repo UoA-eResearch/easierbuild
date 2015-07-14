@@ -1,15 +1,15 @@
 #!/bin/bash
 
 DELFT_REV=$(svn info | grep "Revision" | awk '{print $2}')
-MODULE_FILE=/projects/uoa00035/privatemodules/Delft3D/$DELFT_REV-intel-mpi
+MODULE_FILE=/projects/uoa00035/privatemodules/Delft3D/$DELFT_REV-intel-2015a
 mkdir -p /projects/uoa00035/privatemodules/Delft3D
-INSTALL_DIR=/projects/uoa00035/local/Delft3D/$DELFT_REV-intel-mpi
+INSTALL_DIR=/projects/uoa00035/local/Delft3D/$DELFT_REV-intel-2015a
 
 rm -rf $INSTALL_DIR
 mkdir -p $INSTALL_DIR
 
 module purge
-module load NetCDF/4.3.3.1-intel-mpi
+module load NetCDF/4.3.3.1-intel-2015a
 
 export CC=$EBROOTICC/bin/icc
 export FC=$EBROOTIFORT/bin/ifort
@@ -50,8 +50,8 @@ set root	$INSTALL_DIR
 
 conflict Delft3D
 
-if { ![is-loaded NetCDF/4.3.3.1-intel-mpi] } {
-    module load NetCDF/4.3.3.1-intel-mpi
+if { ![is-loaded NetCDF/4.3.3.1-intel-2015a] } {
+    module load NetCDF/4.3.3.1-intel-2015a
 }
 
 prepend-path	CPATH		\$root/include

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 module purge
-module load HDF5/1.8.15-intel-mpi
-MODULE_FILE=/projects/uoa00035/privatemodules/NetCDF/4.3.3.1-intel-mpi
+module load HDF5/1.8.15-intel-2015a
+MODULE_FILE=/projects/uoa00035/privatemodules/NetCDF/4.3.3.1-intel-2015a
 mkdir -p /projects/uoa00035/privatemodules/NetCDF
-INSTALL_DIR=/projects/uoa00035/local/NetCDF/4.3.3.1-intel-mpi
+INSTALL_DIR=/projects/uoa00035/local/NetCDF/4.3.3.1-intel-2015a
 rm -rf $INSTALL_DIR
 mkdir -p INSTALL_DIR
 
@@ -31,8 +31,8 @@ set root $INSTALL_DIR
 
 conflict netCDF
 
-if { ![is-loaded HDF5/1.8.15-intel-mpi] } {
-    module load HDF5/1.8.15-intel-mpi
+if { ![is-loaded HDF5/1.8.15-intel-2015a] } {
+    module load HDF5/1.8.15-intel-2015a
 }
 
 prepend-path	CPATH		\$root/include

@@ -10,7 +10,7 @@
 #SBATCH -o stdout.txt
 
 ml VTune/2015_update2
-ml Delft3D/5128-intel-mpi
+ml Delft3D/5128-intel-2015a
 ml itac/9.0.3.051
 source itacvars.sh impi5
 

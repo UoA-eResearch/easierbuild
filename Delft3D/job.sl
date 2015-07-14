@@ -9,7 +9,7 @@
 #SBATCH -e stderr.txt
 #SBATCH -o stdout.txt
 
-ml Delft3D/5128-intel-mpi
+ml Delft3D/5128-intel-2015a
 
 unset I_MPI_PMI_LIBRARY #required
 
