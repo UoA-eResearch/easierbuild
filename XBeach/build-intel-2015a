@@ -1,0 +1,60 @@
+#!/bin/bash
+
+XBEACH_REV=$(svn info | grep "Revision" | awk '{print $2}')
+MODULE_FILE=/projects/uoa00035/privatemodules/XBeach/$XBEACH_REV-intel-2015a
+mkdir -p /projects/uoa00035/privatemodules/XBeach
+INSTALL_DIR=/projects/uoa00035/local/XBeach/$XBEACH_REV-intel-2015a
+
+rm -rf $INSTALL_DIR
+mkdir -p $INSTALL_DIR
+
+module purge
+module load Automake/1.15-intel-2015a
+module load NetCDF/4.3.3.1-intel-mpi
+
+export CC=$EBROOTICC/bin/icc
+export FC=$EBROOTIFORT/bin/ifort
+export F77=$EBROOTIFORT/bin/ifort
+export CXX=$EBROOTICC/bin/icpc
+export MPICCXX=$EBROOTIMPI/bin64/mpiicpc
+export MPIFC=$EBROOTIMPI/bin64/mpiifort
+export MPIF77=$EBROOTIMPI/bin64/mpiifort
+#export CFLAGS='-O2'
+#export CXXFLAGS='-O2'
+#export FCFLAGS='-O2'
+#export FCFLAGS='-O2'
+
+make clean
+make distclean
+./autogen.sh
+./configure --prefix=$INSTALL_DIR --with-mpi --with-netcdf | tee configure-intel.log
+make | tee make-intel.log && make install
+
+cat > $MODULE_FILE <<EOL
+#%Module
+
+proc ModulesHelp { } {
+    puts stderr {  XBeach is a two-dimensional model for wave propagation, long waves and mean flow, sediment transport and morphological changes of the nearshore area, beaches, dunes and backbarrier during storms 
+    }
+}
+
+module-whatis {Description: XBeach is a two-dimensional model for wave propagation, long waves and mean flow, sediment transport and morphological changes of the nearshore area, beaches, dunes and backbarrier during storms - Homepage: http://oss.deltares.nl/web/xbeach
+}
+
+set root	$INSTALL_DIR 
+
+conflict XBeach
+
+if { ![is-loaded NetCDF/4.3.3.1-intel-mpi] } {
+    module load NetCDF/4.3.3.1-intel-mpi
+}
+
+prepend-path	CPATH		\$root/include
+prepend-path	LD_LIBRARY_PATH		\$root/lib
+prepend-path	LIBRARY_PATH		\$root/lib
+prepend-path	MANPATH		\$root/share/man
+prepend-path	PKG_CONFIG_PATH		\$root/lib/pkgconfig
+prepend-path	PATH		\$root/bin
+
+setenv	XBEACHROOT		\$root
+EOL
