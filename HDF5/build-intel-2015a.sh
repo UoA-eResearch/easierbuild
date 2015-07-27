@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# use an interactive session to build and test this:
-# salloc -A uoa00035 -n 8 -C sb --time=3:00:00
-MODULE_FILE=/projects/uoa00035/privatemodules/HDF5/1.8.15-intel-2015a
-mkdir -p /projects/uoa00035/privatemodules/HDF5 
-INSTALL_DIR=/projects/uoa00035/local/HDF5/1.8.15-intel-2015a
+ROOT=/projects/uoa99999
+MODULE_FILE=$ROOT/privatemodules/HDF5/1.8.15-intel-2015a
+mkdir -p $ROOT/privatemodules/HDF5 
+INSTALL_DIR=$ROOT/local/HDF5/1.8.15-intel-2015a
 rm -rf $INSTALL_DIR
 mkdir -p $INSTALL_DIR
 

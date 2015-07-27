@@ -1,9 +1,10 @@
 #!/bin/bash
 
+ROOT=/projects/uoa99999
 DELFT_REV=$(svn info | grep "Revision" | awk '{print $2}')
-MODULE_FILE=/projects/uoa00035/privatemodules/Delft3D/$DELFT_REV-intel-2015a
-mkdir -p /projects/uoa00035/privatemodules/Delft3D
-INSTALL_DIR=/projects/uoa00035/local/Delft3D/$DELFT_REV-intel-2015a
+MODULE_FILE=$ROOT/privatemodules/Delft3D/$DELFT_REV-intel-2015a
+mkdir -p $ROOT/privatemodules/Delft3D
+INSTALL_DIR=$ROOT/local/Delft3D/$DELFT_REV-intel-2015a
 
 rm -rf $INSTALL_DIR
 mkdir -p $INSTALL_DIR
