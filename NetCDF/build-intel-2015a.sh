@@ -10,6 +10,7 @@ rm -rf $INSTALL_DIR
 mkdir -p $INSTALL_DIR
 
 unset I_MPI_PMI_LIBRARY
+sed -i.bak 's/mpiexec /mpiexec.hydra /g' nc_test4/run_par_test.sh
 CC=$EBROOTIMPI/bin64/mpiicc ./configure --prefix=$INSTALL_DIR --enable-parallel-tests
 make clean
 make check install
