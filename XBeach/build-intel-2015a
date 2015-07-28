@@ -46,8 +46,8 @@ set root	$INSTALL_DIR
 
 conflict XBeach
 
-if { ![is-loaded NetCDF/4.3.3.1-intel-mpi] } {
-    module load NetCDF/4.3.3.1-intel-mpi
+if { ![is-loaded NetCDF/4.3.3.1-intel-2051a] } {
+    module load NetCDF/4.3.3.1-intel-2015a
 }
 
 prepend-path	CPATH		\$root/include
