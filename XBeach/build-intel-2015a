@@ -11,7 +11,7 @@ mkdir -p $INSTALL_DIR
 
 module purge
 module load Automake/1.15-intel-2015a
-module load NetCDF/4.3.3.1-intel-mpi
+module load NetCDF/4.3.3.1-intel-2015a
 
 export CC=$EBROOTICC/bin/icc
 export FC=$EBROOTIFORT/bin/ifort
