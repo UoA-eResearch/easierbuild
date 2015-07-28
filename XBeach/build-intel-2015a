@@ -46,7 +46,7 @@ set root	$INSTALL_DIR
 
 conflict XBeach
 
-if { ![is-loaded NetCDF/4.3.3.1-intel-2051a] } {
+if { ![is-loaded NetCDF/4.3.3.1-intel-2015a] } {
     module load NetCDF/4.3.3.1-intel-2015a
 }
 
